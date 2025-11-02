@@ -35,6 +35,16 @@
                style="background: linear-gradient(135deg, rgba(240, 147, 251, 0.15) 0%, rgba(245, 87, 108, 0.15) 100%); color: #f093fb; border: 1px solid rgba(240, 147, 251, 0.3); padding: 0.5rem 0.875rem; border-radius: 8px; font-weight: 500;">
                 <i class="bi bi-pencil-square"></i> <span class="d-none d-md-inline">Editar Votos</span>
             </a>
+            @if($pendingReview > 0)
+            <a href="{{ route('admin.surveys.suspicious-votes', $survey) }}"
+               class="btn btn-sm position-relative"
+               style="background: linear-gradient(135deg, rgba(255, 193, 7, 0.15) 0%, rgba(255, 152, 0, 0.15) 100%); color: #ff9800; border: 1px solid rgba(255, 152, 0, 0.3); padding: 0.5rem 0.875rem; border-radius: 8px; font-weight: 500;">
+                <i class="bi bi-shield-exclamation"></i> <span class="d-none d-md-inline">Votos Sospechosos</span>
+                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark" style="font-size: 0.7rem;">
+                    {{ $pendingReview }}
+                </span>
+            </a>
+            @endif
             <form action="{{ route('admin.surveys.duplicate', $survey) }}" method="POST" class="d-inline">
                 @csrf
                 <button type="submit" class="btn btn-sm"
@@ -71,6 +81,20 @@
             </a>
         </div>
     </div>
+
+    <!-- Estadísticas de Detección de Fraude -->
+    @if($pendingReview > 0 || $rejectedVotes > 0)
+    <div class="alert alert-warning d-flex align-items-center mb-4" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2" style="font-size: 1.5rem;"></i>
+        <div>
+            <strong>Detección de Fraude Activa</strong><br>
+            <span class="small">
+                Se detectaron {{ $pendingReview }} votos sospechosos pendientes de revisión.
+                <a href="{{ route('admin.surveys.suspicious-votes', $survey) }}" class="alert-link">Ver votos sospechosos</a>
+            </span>
+        </div>
+    </div>
+    @endif
 
     <!-- Estadísticas Detalladas -->
     <div class="row g-4 mb-4">
@@ -174,13 +198,40 @@
                                 <div class="p-3 bg-white rounded-3">
                                     <div class="d-flex justify-content-between align-items-center mb-2">
                                         <span class="text-muted">
-                                            <i class="bi bi-chat-dots-fill text-primary"></i> Total de respuestas
+                                            <i class="bi bi-chat-dots-fill text-primary"></i> Total de respuestas aprobadas
                                         </span>
                                         <span class="fw-bold fs-5">{{ number_format($totalVotes) }}</span>
                                     </div>
                                     <small class="text-muted">{{ $survey->questions->count() }} pregunta(s) × {{ $uniqueVoters }} votantes</small>
                                 </div>
                             </div>
+
+                            @if($pendingReview > 0 || $rejectedVotes > 0)
+                            <div class="col-12">
+                                <div class="p-3 bg-white rounded-3 border border-warning">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <span class="text-muted">
+                                            <i class="bi bi-shield-exclamation text-warning"></i> Votos en revisión
+                                        </span>
+                                        <span class="fw-bold fs-5 text-warning">{{ number_format($pendingReview) }}</span>
+                                    </div>
+                                    <small class="text-muted">Marcados como sospechosos por el sistema</small>
+                                </div>
+                            </div>
+                            @if($rejectedVotes > 0)
+                            <div class="col-12">
+                                <div class="p-3 bg-white rounded-3 border border-danger">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <span class="text-muted">
+                                            <i class="bi bi-x-circle text-danger"></i> Votos rechazados
+                                        </span>
+                                        <span class="fw-bold fs-5 text-danger">{{ number_format($rejectedVotes) }}</span>
+                                    </div>
+                                    <small class="text-muted">Confirmados como fraudulentos</small>
+                                </div>
+                            </div>
+                            @endif
+                            @endif
 
                             @if(($survey->views_count ?? 0) > 0)
                             <div class="col-12">

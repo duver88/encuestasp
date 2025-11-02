@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Survey;
 use App\Models\SurveyToken;
 use App\Models\Vote;
+use App\Services\VoteFraudDetector;
+use App\Services\VoteRateLimiter;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -152,10 +154,49 @@ class SurveyController extends Controller
         // TOKEN VÁLIDO - Incrementar intentos del token
         $tokenRecord->incrementAttempt();
 
+        // ===================================================================
+        // RATE LIMITING: Verificar límites ANTES de procesar el voto
+        // ===================================================================
+        $rateLimiter = new VoteRateLimiter();
+
+        // Verificar cada respuesta contra el rate limiter
+        foreach ($validated['answers'] as $questionId => $optionId) {
+            $rateLimitCheck = $rateLimiter->allowVote(
+                $survey->id,
+                $optionId,
+                $ipAddress,
+                $fingerprint
+            );
+
+            if (!$rateLimitCheck['allowed']) {
+                // Rate limit excedido - MOSTRAR ÉXITO pero NO contar el voto
+                // Esto previene que atacantes sepan que fueron bloqueados
+                return redirect()->route('surveys.thanks', $survey->public_slug)
+                    ->with('success', '¡Gracias por tu participación!')
+                    ->with('rate_limited', true); // Flag interno (no se muestra al usuario)
+            }
+        }
+
         try {
             DB::beginTransaction();
 
+            // Instanciar el detector de fraude
+            $fraudDetector = new VoteFraudDetector();
+
             foreach ($validated['answers'] as $questionId => $optionId) {
+                // Preparar datos del voto para análisis de fraude
+                $voteData = [
+                    'user_agent' => $deviceData['user_agent'] ?? null,
+                    'platform' => $deviceData['platform'] ?? null,
+                    'screen_resolution' => $deviceData['screen_resolution'] ?? null,
+                    'browser_language' => $request->header('Accept-Language'),
+                    'hardware_concurrency' => $deviceData['hardware_concurrency'] ?? null,
+                ];
+
+                // Analizar el voto para detectar patrones sospechosos
+                $fraudAnalysis = $fraudDetector->analyzeVote($voteData, $questionId, $optionId);
+
+                // Crear el voto con los datos de fraude incluidos
                 Vote::create([
                     'survey_id' => $survey->id,
                     'survey_token_id' => $tokenRecord->id,
@@ -167,7 +208,21 @@ class SurveyController extends Controller
                     'platform' => $deviceData['platform'] ?? null,
                     'screen_resolution' => $deviceData['screen_resolution'] ?? null,
                     'hardware_concurrency' => $deviceData['hardware_concurrency'] ?? null,
+                    // Campos de detección de fraude
+                    'status' => $fraudAnalysis['status'],
+                    'fraud_score' => $fraudAnalysis['fraud_score'],
+                    'fraud_reasons' => !empty($fraudAnalysis['fraud_reasons'])
+                        ? json_encode($fraudAnalysis['fraud_reasons'])
+                        : null,
                 ]);
+
+                // Registrar el voto en el sistema de rate limiting
+                $rateLimiter->recordVote(
+                    $survey->id,
+                    $optionId,
+                    $ipAddress,
+                    $fingerprint
+                );
             }
 
             // Marcar el token como usado (ya validamos que es válido arriba)

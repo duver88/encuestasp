@@ -46,6 +46,13 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('/surveys/{survey}/edit-votes', [AdminSurveyController::class, 'editVotes'])->name('surveys.votes.edit');
     Route::put('/surveys/{survey}/update-votes', [AdminSurveyController::class, 'updateVotes'])->name('surveys.votes.update');
 
+    // Gestión de votos sospechosos
+    Route::get('/surveys/{survey}/suspicious-votes', [AdminSurveyController::class, 'suspiciousVotes'])->name('surveys.suspicious-votes');
+    Route::post('/surveys/{survey}/votes/{vote}/approve', [AdminSurveyController::class, 'approveVote'])->name('surveys.votes.approve');
+    Route::post('/surveys/{survey}/votes/{vote}/reject', [AdminSurveyController::class, 'rejectVote'])->name('surveys.votes.reject');
+    Route::post('/surveys/{survey}/votes/bulk-approve', [AdminSurveyController::class, 'bulkApproveVotes'])->name('surveys.votes.bulk-approve');
+    Route::post('/surveys/{survey}/votes/bulk-reject', [AdminSurveyController::class, 'bulkRejectVotes'])->name('surveys.votes.bulk-reject');
+
     // Gestión de tokens
     Route::get('/surveys/{survey}/tokens', [TokenController::class, 'index'])->name('surveys.tokens.index');
     Route::post('/surveys/{survey}/tokens/generate', [TokenController::class, 'generate'])->name('surveys.tokens.generate');

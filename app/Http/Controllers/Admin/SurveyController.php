@@ -16,9 +16,13 @@ class SurveyController extends Controller
 {
     public function index()
     {
-        // Solo contar votos que tienen survey_token_id (votos válidos con tokens)
+        // Solo contar votos aprobados y válidos (con token o manuales)
         $surveys = Survey::withCount(['votes' => function ($query) {
-            $query->whereNotNull('survey_token_id');
+            $query->where('status', 'approved')
+                  ->where(function($q) {
+                      $q->whereNotNull('survey_token_id')
+                        ->orWhere('is_manual', true);
+                  });
         }])->latest()->get();
         return view('admin.surveys.index', compact('surveys'));
     }
@@ -154,17 +158,22 @@ class SurveyController extends Controller
     {
         $survey->load(['questions.options.votes', 'votes']);
 
-        // Calcular estadísticas - Solo contar votos válidos (con token o manuales)
-        $uniqueVoters = $survey->votes()->valid()->distinct('fingerprint')->count();
-        $totalVotes = $survey->votes()->valid()->count();
+        // Calcular estadísticas - Solo contar votos válidos Y aprobados
+        $uniqueVoters = $survey->votes()->countable()->distinct('fingerprint')->count();
+        $totalVotes = $survey->votes()->countable()->count();
+
+        // Estadísticas de detección de fraude
+        $pendingReview = $survey->votes()->pendingReview()->count();
+        $rejectedVotes = $survey->votes()->rejected()->count();
+        $totalAllVotes = $survey->votes()->valid()->count();
 
         $questionStats = [];
         foreach ($survey->questions as $question) {
-            $questionVotes = $question->votes()->valid()->count();
+            $questionVotes = $question->votes()->countable()->count();
             $options = [];
 
             foreach ($question->options as $option) {
-                $optionVotes = $option->votes()->valid()->count();
+                $optionVotes = $option->votes()->countable()->count();
                 $percentage = $questionVotes > 0 ? round(($optionVotes / $questionVotes) * 100, 2) : 0;
 
                 $options[] = [
@@ -181,7 +190,15 @@ class SurveyController extends Controller
             ];
         }
 
-        return view('admin.surveys.show', compact('survey', 'uniqueVoters', 'totalVotes', 'questionStats'));
+        return view('admin.surveys.show', compact(
+            'survey',
+            'uniqueVoters',
+            'totalVotes',
+            'questionStats',
+            'pendingReview',
+            'rejectedVotes',
+            'totalAllVotes'
+        ));
     }
 
     public function edit(Survey $survey)
@@ -612,5 +629,93 @@ class SurveyController extends Controller
             DB::rollBack();
             return back()->with('error', 'Error al duplicar la encuesta: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Mostrar votos sospechosos para revisión
+     */
+    public function suspiciousVotes(Survey $survey)
+    {
+        $suspiciousVotes = $survey->votes()
+            ->where(function($query) {
+                $query->where('status', 'pending_review')
+                      ->orWhere('fraud_score', '>=', 40);
+            })
+            ->with(['question', 'option', 'token'])
+            ->orderBy('fraud_score', 'desc')
+            ->orderBy('created_at', 'desc')
+            ->paginate(50);
+
+        return view('admin.surveys.suspicious-votes', compact('survey', 'suspiciousVotes'));
+    }
+
+    /**
+     * Aprobar un voto sospechoso
+     */
+    public function approveVote(Survey $survey, Vote $vote)
+    {
+        $vote->update([
+            'status' => 'approved',
+            'reviewed_at' => now(),
+            'reviewed_by' => auth()->id(),
+        ]);
+
+        return back()->with('success', 'Voto aprobado exitosamente.');
+    }
+
+    /**
+     * Rechazar un voto sospechoso
+     */
+    public function rejectVote(Survey $survey, Vote $vote)
+    {
+        $vote->update([
+            'status' => 'rejected',
+            'reviewed_at' => now(),
+            'reviewed_by' => auth()->id(),
+        ]);
+
+        return back()->with('success', 'Voto rechazado exitosamente.');
+    }
+
+    /**
+     * Aprobar múltiples votos
+     */
+    public function bulkApproveVotes(Request $request, Survey $survey)
+    {
+        $validated = $request->validate([
+            'vote_ids' => 'required|array',
+            'vote_ids.*' => 'required|exists:votes,id',
+        ]);
+
+        Vote::whereIn('id', $validated['vote_ids'])
+            ->update([
+                'status' => 'approved',
+                'reviewed_at' => now(),
+                'reviewed_by' => auth()->id(),
+            ]);
+
+        $count = count($validated['vote_ids']);
+        return back()->with('success', "{$count} voto(s) aprobado(s) exitosamente.");
+    }
+
+    /**
+     * Rechazar múltiples votos
+     */
+    public function bulkRejectVotes(Request $request, Survey $survey)
+    {
+        $validated = $request->validate([
+            'vote_ids' => 'required|array',
+            'vote_ids.*' => 'required|exists:votes,id',
+        ]);
+
+        Vote::whereIn('id', $validated['vote_ids'])
+            ->update([
+                'status' => 'rejected',
+                'reviewed_at' => now(),
+                'reviewed_by' => auth()->id(),
+            ]);
+
+        $count = count($validated['vote_ids']);
+        return back()->with('success', "{$count} voto(s) rechazado(s) exitosamente.");
     }
 }
