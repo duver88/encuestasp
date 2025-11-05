@@ -228,6 +228,7 @@ class SurveyController extends Controller
                     'platform' => $deviceData['platform'] ?? null,
                     'screen_resolution' => $deviceData['screen_resolution'] ?? null,
                     'hardware_concurrency' => $deviceData['hardware_concurrency'] ?? null,
+                    'is_valid' => true, // Voto válido con token
                     // Campos de detección de fraude
                     'status' => $fraudAnalysis['status'],
                     'fraud_score' => $fraudAnalysis['fraud_score'],

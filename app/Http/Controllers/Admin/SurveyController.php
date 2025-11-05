@@ -529,6 +529,7 @@ class SurveyController extends Controller
                             'user_agent' => 'Admin Manual Edit',
                             'platform' => 'Admin Panel',
                             'is_manual' => true,
+                            'is_valid' => true,
                         ]);
 
                         $optionData['votes_created']++;
