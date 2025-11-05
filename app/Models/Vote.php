@@ -18,6 +18,7 @@ class Vote extends Model
         'screen_resolution',
         'hardware_concurrency',
         'is_manual',
+        'is_valid',
         'status',
         'fraud_score',
         'fraud_reasons',
@@ -30,6 +31,7 @@ class Vote extends Model
         'fraud_reasons' => 'array',
         'reviewed_at' => 'datetime',
         'is_manual' => 'boolean',
+        'is_valid' => 'boolean',
     ];
 
     // Scope para votos válidos (con token o manuales)
