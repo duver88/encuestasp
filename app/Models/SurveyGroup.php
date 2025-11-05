@@ -34,11 +34,12 @@ class SurveyGroup extends Model
             return false;
         }
 
-        return Vote::whereHas('question.survey', function ($query) {
-                $query->where('survey_group_id', $this->id);
-            })
-            ->where('fingerprint', $fingerprint)
-            ->where('is_valid', true)
+        // Optimizado: usar JOIN directo para mejor rendimiento
+        return Vote::join('questions', 'votes.question_id', '=', 'questions.id')
+            ->join('surveys', 'questions.survey_id', '=', 'surveys.id')
+            ->where('surveys.survey_group_id', $this->id)
+            ->where('votes.fingerprint', $fingerprint)
+            ->where('votes.is_valid', true)
             ->exists();
     }
 
@@ -51,14 +52,25 @@ class SurveyGroup extends Model
             return null;
         }
 
-        $vote = Vote::whereHas('question.survey', function ($query) {
-                $query->where('survey_group_id', $this->id);
-            })
-            ->where('fingerprint', $fingerprint)
-            ->where('is_valid', true)
-            ->with('question.survey')
+        // Optimizado: usar JOIN directo en lugar de whereHas para mejor rendimiento
+        $vote = Vote::join('questions', 'votes.question_id', '=', 'questions.id')
+            ->join('surveys', 'questions.survey_id', '=', 'surveys.id')
+            ->where('surveys.survey_group_id', $this->id)
+            ->where('votes.fingerprint', $fingerprint)
+            ->where('votes.is_valid', true)
+            ->select('votes.*', 'surveys.id as survey_id', 'surveys.title as survey_title')
             ->first();
 
-        return $vote?->question?->survey;
+        if (!$vote) {
+            return null;
+        }
+
+        // Crear objeto Survey con los datos obtenidos
+        $survey = new Survey();
+        $survey->id = $vote->survey_id;
+        $survey->title = $vote->survey_title;
+        $survey->exists = true;
+
+        return $survey;
     }
 }
