@@ -140,10 +140,13 @@
                                                                            style="width: 24px; height: 24px; margin: 0; accent-color: {{ $option->color ?? '#DC143C' }};"
                                                                            required>
                                                                     @if($option->image)
-                                                                        <div class="shrink-0 mx-3" style="width: 80px; height: 80px; overflow: hidden; border-radius: 8px; background: #ffffff; border: 2px solid {{ $option->color ?? '#DC143C' }};">
+                                                                        <div class="shrink-0 mx-3" style="width: 80px; height: 80px; overflow: hidden; border-radius: 8px; background: #f0f0f0; border: 2px solid {{ $option->color ?? '#DC143C' }};">
                                                                             <img src="{{ asset('storage/' . $option->image) }}"
                                                                                  alt="{{ $option->option_text }}"
                                                                                  class="w-100 h-100"
+                                                                                 loading="lazy"
+                                                                                 width="80"
+                                                                                 height="80"
                                                                                  style="object-fit: cover;">
                                                                         </div>
                                                                     @endif
@@ -203,10 +206,13 @@
                                                                            id="option{{ $option->id }}"
                                                                            style="width: 24px; height: 24px; margin: 0; accent-color: {{ $option->color ?? '#DC143C' }};">
                                                                     @if($option->image)
-                                                                        <div class="shrink-0 mx-3" style="width: 80px; height: 80px; overflow: hidden; border-radius: 8px; background: #ffffff; border: 2px solid {{ $option->color ?? '#DC143C' }};">
+                                                                        <div class="shrink-0 mx-3" style="width: 80px; height: 80px; overflow: hidden; border-radius: 8px; background: #f0f0f0; border: 2px solid {{ $option->color ?? '#DC143C' }};">
                                                                             <img src="{{ asset('storage/' . $option->image) }}"
                                                                                  alt="{{ $option->option_text }}"
                                                                                  class="w-100 h-100"
+                                                                                 loading="lazy"
+                                                                                 width="80"
+                                                                                 height="80"
                                                                                  style="object-fit: cover;">
                                                                         </div>
                                                                     @endif
