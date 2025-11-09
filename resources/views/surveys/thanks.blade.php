@@ -41,11 +41,11 @@
                 <div class="card border-0 rounded-4 overflow-hidden shadow-lg success-card" style="background: #ffffff; box-shadow: 0 20px 60px rgba(220, 20, 60, 0.3), 0 0 80px rgba(255, 0, 0, 0.1); border: 2px solid rgba(220, 20, 60, 0.3);">
                     <!-- Banner de la encuesta (si existe) -->
                     @if($survey->banner)
-                        <div class="banner-wrapper" style="background: linear-gradient(135deg, #1a1a1a 0%, #2d0000 100%); border-bottom: 2px solid rgba(220, 20, 60, 0.3);">
+                        <div class="banner-wrapper" style="background: linear-gradient(135deg, #1a1a1a 0%, #2d0000 100%); border-bottom: 2px solid rgba(220, 20, 60, 0.3); height: 400px; display: flex; align-items: center; justify-content: center; overflow: hidden;">
                             <img src="{{ asset('storage/' . $survey->banner) }}"
                                  alt="Banner de {{ $survey->title }}"
-                                 class="w-100 banner-img"
-                                 style="display: block; height: auto; max-height: 400px; object-fit: contain; opacity: 0.9;">
+                                 class="banner-img"
+                                 style="width: 100%; height: 100%; object-fit: cover; opacity: 0.9;">
                         </div>
                     @endif
 
@@ -222,20 +222,7 @@
 <style>
 /* Estilos del banner */
 .banner-wrapper {
-    overflow: hidden;
-    background: #f8f9fa;
-    min-height: 200px;
-    max-height: 400px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.banner-img {
     animation: fadeIn 0.8s ease-out;
-    object-fit: contain !important;
-    width: 100%;
-    height: auto;
 }
 
 @keyframes fadeIn {
@@ -532,12 +519,7 @@
 
     /* Banner móvil */
     .banner-wrapper {
-        min-height: 150px !important;
-        max-height: 250px !important;
-    }
-
-    .banner-img {
-        max-height: 250px !important;
+        height: 250px !important;
     }
 
     /* Título de resultados */
@@ -709,12 +691,7 @@
 
     /* Banner extra pequeño */
     .banner-wrapper {
-        min-height: 150px !important;
-        max-height: 250px !important;
-    }
-
-    .banner-img {
-        max-height: 250px !important;
+        height: 200px !important;
     }
 }
 

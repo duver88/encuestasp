@@ -27,11 +27,11 @@
                 <div class="card border-0 rounded-4 overflow-hidden" style="background: #ffffff; box-shadow: 0 20px 60px rgba(220, 20, 60, 0.3), 0 0 80px rgba(255, 0, 0, 0.1); border: 2px solid rgba(220, 20, 60, 0.3);">
                     <!-- Banner -->
                     @if($survey->banner)
-                        <div class="banner-wrapper-form" style="background: linear-gradient(135deg, #1a1a1a 0%, #2d0000 100%); border-bottom: 2px solid rgba(220, 20, 60, 0.3);">
+                        <div class="banner-wrapper-form" style="background: linear-gradient(135deg, #1a1a1a 0%, #2d0000 100%); border-bottom: 2px solid rgba(220, 20, 60, 0.3); height: 400px; display: flex; align-items: center; justify-content: center; overflow: hidden;">
                             <img src="{{ asset('storage/' . $survey->banner) }}"
                                  alt="Banner de {{ $survey->title }}"
-                                 class="w-100 banner-img-form"
-                                 style="display: block; height: auto; max-height: 400px; object-fit: contain; opacity: 0.9;">
+                                 class="banner-img-form"
+                                 style="width: 100%; height: 100%; object-fit: cover; opacity: 0.9;">
                         </div>
                     @else
                         <div class="card-img-top bg-gradient d-flex align-items-center justify-content-center"
@@ -862,12 +862,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     /* Banner móvil */
     .banner-wrapper-form {
-        min-height: 150px !important;
-        max-height: 250px !important;
-    }
-
-    .banner-img-form {
-        max-height: 250px !important;
+        height: 250px !important;
     }
 }
 
@@ -944,12 +939,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     /* Banner extra pequeño */
     .banner-wrapper-form {
-        min-height: 120px !important;
-        max-height: 200px !important;
-    }
-
-    .banner-img-form {
-        max-height: 200px !important;
+        height: 200px !important;
     }
 }
 </style>
